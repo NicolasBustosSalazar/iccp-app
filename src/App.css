@@ -1,0 +1,47 @@
+/* App.css — ICCP Application Styles */
+
+/* ── Form helpers (used in App.jsx with className="label-form / input-form") ── */
+
+.label-form {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;        /* slate-600 */
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.input-form {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e1;   /* slate-300 */
+  background: #f8fafc;         /* slate-50 */
+  font-size: 0.875rem;
+  color: #1e293b;              /* slate-800 */
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.input-form:focus {
+  border-color: #3b82f6;       /* blue-500 */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background: #fff;
+}
+
+.input-form::placeholder {
+  color: #94a3b8;              /* slate-400 */
+}
+
+/* ── Spinner animation ── */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 0.75s linear infinite;
+}
