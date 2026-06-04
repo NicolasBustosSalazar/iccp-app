@@ -1,3 +1,5 @@
+import { ICCP_NORMS } from './scoringConfig';
+
 /**
  * calculateINC
  * Computes the Inconsistency (INC) raw score.
@@ -102,9 +104,18 @@ export const calculateScores = (answers, totalItems = 120) => {
   const IPOS = safeAvg(SE, HU, IN, MO, VF);
   const IEXT = safeAvg(AN, DI);
   const IINT = safeAvg(AF, DA);
-  // IAP: Índice de Ajuste de la Personalidad — approximated as mean of IFP and IPOS.
-  // Verify exact formula against the official ICCP manual.
-  const IAP  = safeAvg(IFP, IPOS);
+
+  const getZ = (raw, scale) => {
+    if (raw === null || raw === undefined) return null;
+    const n = ICCP_NORMS[scale];
+    if (!n) return null;
+    return (raw - n.mean) / n.sd;
+  };
+
+  const posZ = safeAvg(getZ(SE, 'SE'), getZ(HU, 'HU'), getZ(IN, 'IN'), getZ(MO, 'MO'), getZ(VF, 'VF'));
+  const patZ = safeAvg(getZ(AF, 'AF'), getZ(DA, 'DA'), getZ(AN, 'AN'), getZ(DI, 'DI'), getZ(PS, 'PS'));
+  
+  const IAP = (posZ !== null && patZ !== null) ? (posZ - patZ) : null;
 
   return {
     validez:    { AR, INC, MGPAT, MNPAT, MGPOS },

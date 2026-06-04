@@ -39,7 +39,6 @@ function App() {
     fechaEvaluacion:  todayISO,
     nivelEducativo:   '',
   });
-  const [showWarning,  setShowWarning]  = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
   // ── Handlers ───────────────────────────────────────────────────────────
@@ -57,7 +56,6 @@ function App() {
       }
       return next;
     });
-    setShowWarning(false);
   };
 
   const handlePatient = (field, value) =>
@@ -68,11 +66,6 @@ function App() {
       .filter(i => answers[i] === undefined);
 
   const handleGenerateReport = async () => {
-    const missing = getMissing();
-
-    // Show informational warning but DO NOT block generation
-    if (missing.length > 0) setShowWarning(true);
-
     setIsGenerating(true);
     try {
       const scores = calculateScores(answers, questions.length);
@@ -225,43 +218,28 @@ function App() {
             <Info size={17} className="text-blue-500" /> Instrucciones
           </h2>
           <p className="text-sm text-slate-600 leading-relaxed">
-            A continuación se presentan una serie de afirmaciones sobre sus pensamientos, sentimientos y
-            comportamientos. Lea cada una cuidadosamente y seleccione la opción que mejor describa qué tan
-            verdadera o falsa es para usted. Puede dejar preguntas sin responder; estas quedarán registradas
-            como <strong>Ausencia de Respuesta (AR)</strong> en el informe.
+            Esta es una lista de frases que las personas podrían decir y/o pensar sobre sí mismas. 
+            Quisiéramos saber cómo se describiría a usted mismo. Lea cada frase cuidadosamente y 
+            seleccione la opción que mejor lo describa cómo usted es la mayor parte del tiempo. 
+            Para cada frase encontrará 6 opciones de respuestas, que van desde Completamente falso a 
+            Completamente verdadero. Elija sólo una opción y no deje frases sin contestar. No hay 
+            respuestas "correctas" o "incorrectas". Responda honestamente. Sus respuestas serán tratadas 
+            en forma confidencial. Tómese el tiempo que necesite.
           </p>
         </section>
 
-        {/* ── Warning banner (informational, non-blocking) ──────────────── */}
-        {showWarning && missing.length > 0 && (
-          <div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl shadow-sm flex items-start gap-3 sticky top-20 z-10">
-            <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-            <div>
-              <p className="text-sm font-bold text-amber-800">
-                {missing.length} pregunta{missing.length > 1 ? 's' : ''} sin responder
-              </p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Ítems:{' '}
-                <span className="font-medium">{missing.slice(0, 15).map(i => i + 1).join(', ')}</span>
-                {missing.length > 15 && ` y ${missing.length - 15} más…`}
-                <span className="ml-2">— Se registrarán como AR en el informe.</span>
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* ── Questions list ────────────────────────────────────────────── */}
         <div className="space-y-4">
           {questions.map((q, idx) => {
             const isAnswered = answers[idx] !== undefined;
-            const isMissing  = showWarning && !isAnswered;
 
             return (
               <div
                 key={idx}
                 id={`question-${idx}`}
                 className={`bg-white rounded-xl shadow-sm border p-5 transition-all duration-200
-                  ${isMissing  ? 'border-amber-300 bg-amber-50/40 ring-1 ring-amber-300' : 'border-slate-200'}
+                  border-slate-200
                   ${isAnswered ? 'border-l-4 border-l-emerald-500' : ''}
                 `}
               >
