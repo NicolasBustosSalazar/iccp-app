@@ -8,10 +8,10 @@
   font-weight: 400;
 }
 
-body {
+html, body, #root {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  padding: 0;
+  width: 100%;
   min-height: 100vh;
+  background-color: #f4f6f8;
 }

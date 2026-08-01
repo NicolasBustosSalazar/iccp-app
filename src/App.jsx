@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { calculateScores } from './utils/calculator';
 import { generatePDF } from './utils/pdfGenerator';
+import { generateResponsesPDF } from './utils/responsesPdfGenerator';
 import { questions } from './utils/questions';
 import {
   AlertCircle, CheckCircle2, Download, FileText,
@@ -40,6 +41,7 @@ function App() {
     nivelEducativo:   '',
   });
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingResponses, setIsGeneratingResponses] = useState(false);
 
   // ── Handlers ───────────────────────────────────────────────────────────
   /**
@@ -78,16 +80,30 @@ function App() {
     }
   };
 
+  const handleGenerateResponses = async () => {
+    setIsGeneratingResponses(true);
+    try {
+      // Small timeout to allow UI update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      generateResponsesPDF(answers, patientData);
+    } catch (err) {
+      console.error('Error generating responses PDF:', err);
+      alert('Hubo un error al generar el PDF de respuestas. Por favor, inténtelo de nuevo.');
+    } finally {
+      setIsGeneratingResponses(false);
+    }
+  };
+
   const missing  = getMissing();
   const answered = questions.length - missing.length;
   const progress = Math.round((answered / questions.length) * 100);
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-800">
+    <div className="w-full max-w-[900px] mx-auto min-h-screen font-sans text-slate-800 flex flex-col">
 
       {/* ── Sticky header ──────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm px-6 py-3 flex justify-between items-center">
+      <header className="sticky top-0 z-20 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.05)] px-4 sm:px-6 py-3 flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
             <FileText className="text-blue-600" size={22} />
@@ -110,33 +126,47 @@ function App() {
             </div>
           </div>
 
-          <button
-            id="btn-generar-informe-header"
-            onClick={handleGenerateReport}
-            disabled={isGenerating}
-            className={`flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-sm transition-all
-              ${isGenerating
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95'
-              }`}
-          >
-            {isGenerating ? 'Generando…' : <><Download size={16} /> Generar Informe</>}
-          </button>
+          <div className="flex gap-2 sm:gap-3 flex-wrap justify-end">
+            <button
+              id="btn-generar-respuestas-header"
+              onClick={handleGenerateResponses}
+              disabled={isGeneratingResponses}
+              className={`flex items-center gap-2 px-3 sm:px-5 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap
+                ${isGeneratingResponses
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95'
+                }`}
+            >
+              {isGeneratingResponses ? 'Generando…' : <><FileText size={16} /> Generar respuestas</>}
+            </button>
+            <button
+              id="btn-generar-informe-header"
+              onClick={handleGenerateReport}
+              disabled={isGenerating}
+              className={`flex items-center gap-2 px-3 sm:px-5 py-2 rounded-lg font-semibold text-sm transition-all whitespace-nowrap
+                ${isGenerating
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-95'
+                }`}
+            >
+              {isGenerating ? 'Generando…' : <><Download size={16} /> Generar Informe</>}
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-6">
+      <main className="w-full py-8 px-4 sm:px-6 space-y-6 flex-1">
 
         {/* ── Patient data form ─────────────────────────────────────────── */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 flex items-center gap-2">
-            <User size={18} className="text-blue-100" />
-            <h2 className="text-sm font-bold text-white tracking-wide uppercase">
+        <section className="bg-white rounded-[8px] shadow-[0_2px_4px_rgba(0,0,0,0.05)] overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2">
+            <User size={20} className="text-slate-500" />
+            <h2 className="text-lg font-medium text-slate-800">
               Datos del Evaluado
             </h2>
           </div>
 
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Nombre */}
             <div className="sm:col-span-2">
               <label className="label-form" htmlFor="pd-nombre">Nombre completo</label>
@@ -213,9 +243,9 @@ function App() {
         </section>
 
         {/* ── Instructions ─────────────────────────────────────────────── */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h2 className="text-base font-semibold text-slate-900 mb-2 flex items-center gap-2">
-            <Info size={17} className="text-blue-500" /> Instrucciones
+        <section className="bg-white rounded-[8px] shadow-[0_2px_4px_rgba(0,0,0,0.05)] p-6">
+          <h2 className="text-lg font-medium text-slate-800 mb-3 flex items-center gap-2">
+            <Info size={20} className="text-slate-500" /> Instrucciones
           </h2>
           <p className="text-sm text-slate-600 leading-relaxed">
             Esta es una lista de frases que las personas podrían decir y/o pensar sobre sí mismas. 
@@ -230,7 +260,7 @@ function App() {
 
 
         {/* ── Questions list ────────────────────────────────────────────── */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {questions.map((q, idx) => {
             const isAnswered = answers[idx] !== undefined;
 
@@ -238,9 +268,8 @@ function App() {
               <div
                 key={idx}
                 id={`question-${idx}`}
-                className={`bg-white rounded-xl shadow-sm border p-5 transition-all duration-200
-                  border-slate-200
-                  ${isAnswered ? 'border-l-4 border-l-emerald-500' : ''}
+                className={`bg-white rounded-[8px] shadow-[0_2px_4px_rgba(0,0,0,0.05)] p-6 transition-all duration-200
+                  ${isAnswered ? 'border-l-4 border-l-emerald-500' : 'border-l-4 border-l-transparent'}
                 `}
               >
                 <div className="flex gap-3 mb-4">
@@ -253,15 +282,15 @@ function App() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                   {OPTIONS.map(opt => (
                     <label
                       key={opt.value}
-                      className={`flex flex-col items-center justify-center p-2.5 rounded-lg border cursor-pointer
+                      className={`flex flex-col items-center justify-center p-3 min-h-[44px] rounded-[8px] cursor-pointer
                         transition-all text-center select-none
                         ${answers[idx] === opt.value
-                          ? 'border-blue-600 bg-blue-50 text-blue-700 ring-1 ring-blue-500 shadow-sm'
-                          : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50 text-slate-500'
+                          ? 'bg-blue-50 text-blue-700 ring-2 ring-blue-500 shadow-sm'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
                         }
                       `}
                     >

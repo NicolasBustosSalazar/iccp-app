@@ -23,7 +23,9 @@ export const Report = ({ scores, patientData }) => {
     const points = items.map((item, idx) => {
       let tScore = item.skipT ? null : getT(item.val, item.key);
       let x = null;
-      if (item.useRaw) {
+      if (item.skipGraph) {
+        x = null;
+      } else if (item.useRaw) {
         const raw = item.val !== null && item.val !== undefined ? item.val : 0;
         x = (Math.min(raw, 15) / 15) * 100;
       } else if (tScore !== null) {
@@ -171,18 +173,18 @@ export const Report = ({ scores, patientData }) => {
   };
 
   const validezItems = [
-    { key: 'AR', band: 'none', useRaw: true, val: scores.validez?.AR },
-    { key: 'INC', band: 'none', useRaw: true, val: scores.validez?.INC },
+    { key: 'AR', band: 'none', skipGraph: true, useRaw: true, val: scores.validez?.AR },
+    { key: 'INC', band: 'none', val: scores.validez?.INC },
     { key: 'MGPAT', band: 'patologica', val: scores.validez?.MGPAT },
-    { key: 'MNPAT', band: 'positiva', val: scores.validez?.MNPAT },
-    { key: 'MGPOS', band: 'positiva', val: scores.validez?.MGPOS },
+    { key: 'MNPAT', band: 'patologica', val: scores.validez?.MNPAT },
+    { key: 'MGPOS', band: 'patologica', val: scores.validez?.MGPOS },
   ];
 
   const globalesItems = [
     { key: 'IFP', band: 'patologica', val: scores.globales?.IFP },
     { key: 'IPAT', band: 'patologica', val: scores.globales?.IPAT },
     { key: 'IPOS', band: 'positiva', val: scores.globales?.IPOS },
-    { key: 'IAP', band: 'none', skipT: true, val: scores.globales?.IAP },
+    { key: 'IAP', band: 'none', val: scores.globales?.IAP },
     { key: 'IEXT', band: 'patologica', val: scores.globales?.IEXT },
     { key: 'IINT', band: 'patologica', val: scores.globales?.IINT },
   ];
@@ -224,6 +226,12 @@ export const Report = ({ scores, patientData }) => {
         <div className="flex"><span className="font-bold w-24 shrink-0">Fecha Info.:</span> <span className="truncate">{pd.fechaInforme}</span></div>
       </div>
 
+      {scores.validez?.AR >= 12 && (
+        <div className="mb-5 bg-red-100 border-l-4 border-red-500 text-red-700 p-3 text-[11px] font-bold shadow-sm">
+          ⚠️ PROTOCOLO INVÁLIDO: El evaluado ha dejado 12 o más respuestas en blanco (AR = {scores.validez.AR}). Según el manual técnico del ICCP, el perfil clínico no es admisible ni interpretable.
+        </div>
+      )}
+
       {/* Bloques Modulares Independientes */}
       <ReportBlock title="Escalas de Validez" items={validezItems} />
       <ReportBlock title="Índices Globales" items={globalesItems} />
@@ -232,7 +240,7 @@ export const Report = ({ scores, patientData }) => {
 
       {/* Leyenda Inferior */}
       <div className="mt-4 text-[10px] text-slate-600 border-t border-slate-200 pt-2 leading-snug">
-        <p className="mb-0.5"><strong>Nota:</strong> AR e INC se evalúan por su puntuación bruta (0-15) y no disponen de puntuación T. El indicador IAP es un cálculo combinado que no dispone de baremo T independiente.</p>
+        <p className="mb-0.5"><strong>Nota:</strong> AR se evalúa por su puntuación bruta (0-15) y no dispone de puntuación T. INC e IAP sí se convierten a puntuación T según sus tablas específicas.</p>
         <p className="flex items-center gap-4">
           <strong>Riesgo Clínico:</strong>
           <span className="flex items-center"><span className="w-2.5 h-2.5 rounded-full bg-red-500 mr-1.5 border border-red-700"></span> T &ge; 60 (Pat.) / T &le; 39 (Pos.)</span>

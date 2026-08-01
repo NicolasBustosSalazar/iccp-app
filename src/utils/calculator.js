@@ -10,7 +10,9 @@ import { ICCP_NORMS } from './scoringConfig';
  * Item numbers are 1-based in the manual; subtract 1 for 0-indexed array.
  * If either item in a pair was left blank the pair is skipped (not penalised).
  */
-export const calculateINC = (answers) => {
+export const calculateINC = (answers, AR = 0) => {
+  if (AR >= 12) return null;
+
   // [item1, item2] — 1-based numbers converted to 0-based inside the function
   const POSITIVE_PAIRS = [
     [41, 87], [59, 71], [63, 66], [39, 80], [21, 56],
@@ -20,20 +22,29 @@ export const calculateINC = (answers) => {
   ];
 
   let inc = 0;
+  let hasMissing = false;
 
   POSITIVE_PAIRS.forEach(([a, b]) => {
     const va = answers[a - 1];
     const vb = answers[b - 1];
-    if (va === undefined || va === null || vb === undefined || vb === null) return;
+    if (va === undefined || va === null || vb === undefined || vb === null) {
+      hasMissing = true;
+      return;
+    }
     if (Math.abs(va - vb) >= 3) inc += 1;
   });
 
   NEGATIVE_PAIRS.forEach(([a, b]) => {
     const va = answers[a - 1];
     const vb = answers[b - 1];
-    if (va === undefined || va === null || vb === undefined || vb === null) return;
+    if (va === undefined || va === null || vb === undefined || vb === null) {
+      hasMissing = true;
+      return;
+    }
     if (Math.abs(va - vb) === 0) inc += 1;
   });
+
+  if (hasMissing) return null;
 
   return inc;
 };
@@ -47,29 +58,44 @@ export const calculateINC = (answers) => {
  */
 export const calculateScores = (answers, totalItems = 120) => {
 
-  /**
-   * Returns the mean of the given 1-based item indices,
-   * excluding any items that were not answered.
-   * Returns null if NO items in the set were answered.
-   */
-  const getAvg = (indices) => {
-    const values = indices
-      .map(i => answers[i - 1])                        // convert to 0-based
-      .filter(v => v !== undefined && v !== null);     // exclude blanks
-    if (values.length === 0) return null;
-    return values.reduce((sum, v) => sum + v, 0) / values.length;
-  };
-
-  // ── Escalas de Validez ──────────────────────────────────────────────────
-  // AR: items not answered at all
+  // Calculate AR first to apply global invalidity rule
   const answered = Object.keys(answers).filter(
     k => answers[k] !== undefined && answers[k] !== null
   ).length;
   const AR = totalItems - answered;
 
+  if (AR >= 12) {
+    return {
+      validez:    { AR, INC: null, MGPAT: null, MNPAT: null, MGPOS: null },
+      criterioA:  { FS: null, FI: null },
+      criterioB:  { AF: null, SE: null, DA: null, HU: null, AN: null, IN: null, DI: null, MO: null, PS: null, VF: null },
+      globales:   { IFP: null, IPAT: null, IPOS: null, IAP: null, IEXT: null, IINT: null },
+      especificas: { FS: null, FI: null, AF: null, SE: null, DA: null, HU: null, AN: null, IN: null, DI: null, MO: null, PS: null, VF: null },
+    };
+  }
+
+  /**
+   * Returns the mean of the given 1-based item indices,
+   * excluding any items that were not answered.
+   * Returns null if missing items > 30% of total items in that scale.
+   */
+  const getAvg = (indices) => {
+    const values = indices
+      .map(i => answers[i - 1])                        // convert to 0-based
+      .filter(v => v !== undefined && v !== null);     // exclude blanks
+      
+    const missingCount = indices.length - values.length;
+    if (missingCount > indices.length * 0.3) return null; // 30% rule individual scale
+
+    if (values.length === 0) return null;
+    return values.reduce((sum, v) => sum + v, 0) / values.length;
+  };
+
+  // ── Escalas de Validez ──────────────────────────────────────────────────
+
   // INC (Inconsistencia): sum of flagged inconsistent pairs (0–10).
   // No T-score is computed for INC — interpreted directly from the raw count.
-  const INC = calculateINC(answers);
+  const INC = calculateINC(answers, AR);
 
   const MGPAT = getAvg([2, 22, 28, 74, 78, 98, 100, 111, 118]);
   const MNPAT = getAvg([6, 9, 33, 36, 62, 92, 113]);

@@ -40,6 +40,18 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 15,
   },
+  warningBanner: {
+    backgroundColor: '#fee2e2',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ef4444',
+    padding: 8,
+    marginBottom: 15,
+  },
+  warningText: {
+    color: '#b91c1c',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   pdField: {
     width: '50%',
     flexDirection: 'row',
@@ -202,7 +214,9 @@ const ReportBlockPDF = ({ title, items }) => {
   const points = items.map((item, idx) => {
     let tScore = item.skipT ? null : getT(item.val, item.key);
     let x = null;
-    if (item.useRaw) {
+    if (item.skipGraph) {
+      x = null;
+    } else if (item.useRaw) {
       const raw = item.val !== null && item.val !== undefined ? item.val : 0;
       x = (Math.min(raw, 15) / 15) * SVG_WIDTH;
     } else if (tScore !== null) {
@@ -353,18 +367,18 @@ export const ICCPReportPDF = ({ scores, patientData }) => {
   };
 
   const validezItems = [
-    { key: 'AR', band: 'none', useRaw: true, val: scores.validez?.AR },
-    { key: 'INC', band: 'none', useRaw: true, val: scores.validez?.INC },
+    { key: 'AR', band: 'none', skipGraph: true, useRaw: true, val: scores.validez?.AR },
+    { key: 'INC', band: 'none', val: scores.validez?.INC },
     { key: 'MGPAT', band: 'patologica', val: scores.validez?.MGPAT },
-    { key: 'MNPAT', band: 'positiva', val: scores.validez?.MNPAT },
-    { key: 'MGPOS', band: 'positiva', val: scores.validez?.MGPOS },
+    { key: 'MNPAT', band: 'patologica', val: scores.validez?.MNPAT },
+    { key: 'MGPOS', band: 'patologica', val: scores.validez?.MGPOS },
   ];
 
   const globalesItems = [
     { key: 'IFP', band: 'patologica', val: scores.globales?.IFP },
     { key: 'IPAT', band: 'patologica', val: scores.globales?.IPAT },
     { key: 'IPOS', band: 'positiva', val: scores.globales?.IPOS },
-    { key: 'IAP', band: 'none', skipT: true, val: scores.globales?.IAP },
+    { key: 'IAP', band: 'none', val: scores.globales?.IAP },
     { key: 'IEXT', band: 'patologica', val: scores.globales?.IEXT },
     { key: 'IINT', band: 'patologica', val: scores.globales?.IINT },
   ];
@@ -405,6 +419,14 @@ export const ICCPReportPDF = ({ scores, patientData }) => {
           <View style={styles.pdField}><Text style={styles.pdLabel}>Fecha Informe:</Text><Text style={styles.pdValue}>{pd.fechaInforme}</Text></View>
         </View>
 
+        {scores.validez?.AR >= 12 && (
+          <View style={styles.warningBanner}>
+            <Text style={styles.warningText}>
+              ⚠️ PROTOCOLO INVÁLIDO: El evaluado ha dejado 12 o más respuestas en blanco (AR = {scores.validez.AR}). Según el manual técnico del ICCP, el perfil clínico no es admisible ni interpretable.
+            </Text>
+          </View>
+        )}
+
         {/* Blocks */}
         <ReportBlockPDF title="Escalas de Validez" items={validezItems} />
         <ReportBlockPDF title="Índices Globales" items={globalesItems} />
@@ -414,7 +436,7 @@ export const ICCPReportPDF = ({ scores, patientData }) => {
         {/* Footer Legend */}
         <View style={styles.footer} wrap={false}>
           <Text style={styles.footerText}>
-            Nota: AR e INC se evalúan por su puntuación bruta (0-15) y no disponen de puntuación T. El indicador IAP es un cálculo combinado que no dispone de baremo T independiente.
+            Nota: AR se evalúa por su puntuación bruta (0-15) y no dispone de puntuación T. INC e IAP sí se convierten a puntuación T según sus tablas específicas.
           </Text>
           <View style={styles.legendBox}>
             <Text style={[styles.footerText, { fontWeight: 'bold', marginRight: 10, marginBottom: 0 }]}>Riesgo Clínico:</Text>
