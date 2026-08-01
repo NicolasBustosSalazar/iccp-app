@@ -47,34 +47,37 @@ export const generateResponsesPDF = (answers, patientData) => {
   // Table Data
   const tableData = questions.map((q, idx) => {
     const answerVal = answers[idx];
-    const answerText = answerVal !== undefined ? `${OPTIONS_MAP[answerVal]} (${answerVal})` : 'Sin responder';
+    const answerText = answerVal !== undefined ? OPTIONS_MAP[answerVal] : 'Sin responder';
+    const answerScore = answerVal !== undefined ? answerVal.toString() : 'N/C';
     const cleanQuestion = q.replace(/^\d+\.\s*/, '');
     return [
       (idx + 1).toString(),
       cleanQuestion,
-      answerText
+      answerText,
+      answerScore
     ];
   });
   
   // AutoTable
   autoTable(doc, {
     startY: startY + lineHeight * 4,
-    head: [['#', 'Pregunta', 'Respuesta']],
+    head: [['#', 'Pregunta', 'Respuesta', 'Valor']],
     body: tableData,
     theme: 'grid',
     headStyles: {
-      fillColor: [37, 99, 235],
+      fillColor: [37, 99, 235], // Subtle contrast background (blue-600)
       textColor: 255,
       fontStyle: 'bold'
     },
     styles: {
       fontSize: 9,
-      cellPadding: 3,
+      cellPadding: 2, // Compact padding to optimize vertical space
     },
     columnStyles: {
-      0: { cellWidth: 10, halign: 'center' },
-      1: { cellWidth: 110 },
-      2: { cellWidth: 'auto', halign: 'center' }
+      0: { cellWidth: 15, halign: 'center' }, // ~8%
+      1: { cellWidth: 100, halign: 'left' },  // ~55%
+      2: { cellWidth: 45, halign: 'left' },   // ~25%
+      3: { cellWidth: 22, halign: 'center' }  // ~12%
     },
     margin: { top: 20 }
   });
